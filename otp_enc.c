@@ -17,8 +17,35 @@ int main(int argc, char *argv[])
 	char buffer[256];
 	int keyIsValid;
 	int plainTextIsValid;
+	FILE* fp;
     
-	if (argc < 4) { fprintf(stderr,"USAGE: %s hostname port\n", argv[0]); exit(0); } // Check usage & args
+	// Check usage & args
+	if(argc < 4){ 
+		fprintf(stderr,"USAGE: %s hostname port\n", argv[0]); exit(0); 
+	} else {
+		// check plaintext
+		fp = fopen(argv[1], "r");
+		memset(buffer, '\0', sizeof(buffer));
+		fgets(buffer, 255, (FILE*)fp);
+		plainTextIsValid = stringCheck(buffer);
+		if(plainTextIsValid){
+			printf("the plaintext only contained valid characters\n");
+		} else {
+			printf("the plaintext contained one or more invalid characters\n");
+		}
+		fclose(fp);
+		// check key
+		fp = fopen(argv[2], "r");
+		memset(buffer, '\0', sizeof(buffer));
+		fgets(buffer, 255, (FILE*)fp);
+		plainTextIsValid = stringCheck(buffer);
+		if(plainTextIsValid){
+			printf("the key only contained valid characters\n");
+		} else {
+			printf("the key contained one or more invalid characters\n");
+		}
+		fclose(fp);
+	}
 
 	// Set up the server address struct
 	memset((char*)&serverAddress, '\0', sizeof(serverAddress)); // Clear out the address struct
@@ -70,12 +97,6 @@ int main(int argc, char *argv[])
 		if (charsRead < 0) error("CLIENT: ERROR reading from socket");
 
 		printf("CLIENT: I received this from the server: \"%s\"\n", buffer);
-		plainTextIsValid = stringCheck(buffer);
-		if(plainTextIsValid){
-			printf("the input only contained valid characters\n");
-		} else {
-			printf("the input contained one or more invalid characters\n");
-		}
 	}
 	close(socketFD); // Close the socket
 	return 0;
