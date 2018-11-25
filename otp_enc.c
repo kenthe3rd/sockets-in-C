@@ -14,7 +14,9 @@ int main(int argc, char *argv[])
 	int socketFD, portNumber, charsWritten, charsRead;
 	struct sockaddr_in serverAddress;
 	struct hostent* serverHostInfo;
-	char buffer[256];
+	char buffer[256] = "";
+	char plainText[256] = "";
+	char key[256] = "";
 	int keyIsValid;
 	int keylen;
 	int plainTextIsValid;
@@ -35,6 +37,8 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "the plaintext contained one or more invalid characters\n");
 			fclose(fp);
 			exit(1);
+		} else {
+			strcpy(plainText, buffer);
 		}
 		fclose(fp);
 
@@ -48,6 +52,8 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "the key contained one or more invalid characters\n");
 			fclose(fp);
 			exit(1);
+		} else {
+			strcpy(key, buffer);
 		}
 		fclose(fp);
 
@@ -91,14 +97,13 @@ int main(int argc, char *argv[])
 	} else if(strcmp(buffer, "1") != 0){
 		error("CONNECTION ERROR: FAILED TO CONFIRM CONNECTION TO OTP_ENC_D\n");
 	} else {
-		// Get input message from user
-		printf("CLIENT: Enter text to send to the server, and then hit enter: ");
-		memset(buffer, '\0', sizeof(buffer)); // Clear out the buffer array
-		fgets(buffer, sizeof(buffer) - 1, stdin); // Get input from the user, trunc to buffer - 1 chars, leaving \0
-		buffer[strcspn(buffer, "\n")] = '\0'; // Remove the trailing \n that fgets adds
+		// Send plaintext to server
+		charsWritten = send(socketFD, plainText, strlen(plainText), 0); // Write to the server
+		if (charsWritten < 0) error("CLIENT: ERROR writing to socket");
+		if (charsWritten < strlen(buffer)) printf("CLIENT: WARNING: Not all data written to socket!\n");
 
-		// Send message to server
-		charsWritten = send(socketFD, buffer, strlen(buffer), 0); // Write to the server
+		// Send key to server
+		charsWritten = send(socketFD, key, strlen(key), 0); // Write to the server
 		if (charsWritten < 0) error("CLIENT: ERROR writing to socket");
 		if (charsWritten < strlen(buffer)) printf("CLIENT: WARNING: Not all data written to socket!\n");
 

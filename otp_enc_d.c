@@ -16,6 +16,8 @@ int main(int argc, char *argv[])
 	struct sockaddr_in serverAddress, clientAddress;
 	int pid;
 	char encryptorSignature[64] = "OTP_ENC REQUESTING ENCRYPTION\0";
+	char plaintext[256];
+	char key[256];
 
 	if (argc < 2) { fprintf(stderr,"USAGE: %s port\n", argv[0]); exit(1); } // Check usage & args
 
@@ -60,17 +62,49 @@ int main(int argc, char *argv[])
 				if(charsRead < 0){
 					error("ERROR writing to socket");
 				} else {
+					// read plaintext
 					memset(buffer, '\0', 256);
 					charsRead = recv(establishedConnectionFD, buffer, 255, 0);
-				}
-				if(charsRead < 0){
-					error("ERROR reading from socket");
-				} else {
-					printf("SERVER: I received this from the client: \"%s\"\n", buffer);
-					charsRead = send(establishedConnectionFD, "DONE", 4, 0);
 					if(charsRead < 0){
-						error("ERROR writing to socket");
+						error("ERROR reading plaintext data from socket");
+					} else {
+						strcpy(plaintext, buffer);
 					}
+					memset(buffer, '\0', 256);
+					charsRead = recv(establishedConnectionFD, buffer, 255, 0);
+					if(charsRead < 0){
+						error("ERROR reading key data from socket");
+					} else {
+						strcpy(key, buffer);
+					}
+				}
+				int i;
+				int plainNum;
+				int keyNum;
+				int outputNum;
+				char output[256] = "";
+				for(i=0; i<strlen(plaintext)-1; ++i){
+					plainNum = plaintext[i] - 'A';
+					keyNum = key[i] - 'A';
+					// shift spaces to '26th' character of alphabet
+					if(plainNum == -33){
+						plainNum = 26;
+					}
+					if(keyNum == -33){
+						keyNum = 26;
+					}
+					outputNum = ( (keyNum + plainNum) % 27 );
+					if(outputNum == 26){
+						// convert to space
+						output[i] = 32;
+					} else {
+						// convert to capital
+						output[i] = outputNum + 'A';
+					}
+				}
+				charsRead = send(establishedConnectionFD, output, sizeof(output), 0);
+				if(charsRead < 0){
+					error("ERROR writing to socket");
 				}
 			}
 			close(establishedConnectionFD); // Close the existing socket which is connected to the client
