@@ -15,6 +15,7 @@ int main(int argc, char *argv[])
 	char buffer[256];
 	struct sockaddr_in serverAddress, clientAddress;
 	int pid;
+	char encryptorSignature[64] = "OTP_ENC REQUESTING ENCRYPTION\0";
 
 	if (argc < 2) { fprintf(stderr,"USAGE: %s port\n", argv[0]); exit(1); } // Check usage & args
 
@@ -51,11 +52,27 @@ int main(int argc, char *argv[])
 			memset(buffer, '\0', 256);
 			charsRead = recv(establishedConnectionFD, buffer, 255, 0); // Read the client's message from the socket
 			if (charsRead < 0) error("ERROR reading from socket");
-			printf("SERVER: I received this from the client: \"%s\"\n", buffer);
-
-			// Send a Success message back to the client
-			charsRead = send(establishedConnectionFD, "I am the server, and I got your message", 39, 0); // Send success back
-			if (charsRead < 0) error("ERROR writing to socket");
+			if(strcmp(buffer, encryptorSignature) != 0){
+				fprintf(stderr, "Invalid signature! Closing connection.\n");
+			} else {
+				// Send a Success message back to the client, then read some more
+				charsRead = send(establishedConnectionFD, "1", 39, 0); // Send success back
+				if(charsRead < 0){
+					error("ERROR writing to socket");
+				} else {
+					memset(buffer, '\0', 256);
+					charsRead = recv(establishedConnectionFD, buffer, 255, 0);
+				}
+				if(charsRead < 0){
+					error("ERROR reading from socket");
+				} else {
+					printf("SERVER: I received this from the client: \"%s\"\n", buffer);
+					charsRead = send(establishedConnectionFD, "DONE", 4, 0);
+					if(charsRead < 0){
+						error("ERROR writing to socket");
+					}
+				}
+			}
 			close(establishedConnectionFD); // Close the existing socket which is connected to the client
 		}
 	}
