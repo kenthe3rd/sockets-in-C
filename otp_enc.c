@@ -16,7 +16,9 @@ int main(int argc, char *argv[])
 	struct hostent* serverHostInfo;
 	char buffer[256];
 	int keyIsValid;
+	int keylen;
 	int plainTextIsValid;
+	int plainlen;
 	FILE* fp;
     
 	// Check usage & args
@@ -28,23 +30,32 @@ int main(int argc, char *argv[])
 		memset(buffer, '\0', sizeof(buffer));
 		fgets(buffer, 255, (FILE*)fp);
 		plainTextIsValid = stringCheck(buffer);
-		if(plainTextIsValid){
-			printf("the plaintext only contained valid characters\n");
-		} else {
-			printf("the plaintext contained one or more invalid characters\n");
+		plainlen = strlen(buffer);
+		if(!plainTextIsValid){
+			fprintf(stderr, "the plaintext contained one or more invalid characters\n");
+			fclose(fp);
+			exit(1);
 		}
 		fclose(fp);
+
 		// check key
 		fp = fopen(argv[2], "r");
 		memset(buffer, '\0', sizeof(buffer));
 		fgets(buffer, 255, (FILE*)fp);
 		plainTextIsValid = stringCheck(buffer);
-		if(plainTextIsValid){
-			printf("the key only contained valid characters\n");
-		} else {
-			printf("the key contained one or more invalid characters\n");
+		keylen = strlen(buffer);
+		if(!plainTextIsValid){
+			fprintf(stderr, "the key contained one or more invalid characters\n");
+			fclose(fp);
+			exit(1);
 		}
 		fclose(fp);
+
+		//compare string lengths
+		if(keylen < plainlen){
+			fprintf(stderr, "ERROR: key length less than plaintext length\n");
+			exit(1);
+		}
 	}
 
 	// Set up the server address struct
