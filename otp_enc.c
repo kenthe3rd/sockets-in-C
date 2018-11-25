@@ -8,13 +8,15 @@
 #include <netdb.h> 
 
 void error(const char *msg) { perror(msg); exit(0); } // Error function used for reporting issues
-
+int stringCheck(const char*);
 int main(int argc, char *argv[])
 {
 	int socketFD, portNumber, charsWritten, charsRead;
 	struct sockaddr_in serverAddress;
 	struct hostent* serverHostInfo;
 	char buffer[256];
+	int keyIsValid;
+	int plainTextIsValid;
     
 	if (argc < 4) { fprintf(stderr,"USAGE: %s hostname port\n", argv[0]); exit(0); } // Check usage & args
 
@@ -66,8 +68,27 @@ int main(int argc, char *argv[])
 		memset(buffer, '\0', sizeof(buffer)); // Clear out the buffer again for reuse
 		charsRead = recv(socketFD, buffer, sizeof(buffer) - 1, 0); // Read data from the socket, leaving \0 at end
 		if (charsRead < 0) error("CLIENT: ERROR reading from socket");
+
 		printf("CLIENT: I received this from the server: \"%s\"\n", buffer);
+		plainTextIsValid = stringCheck(buffer);
+		if(plainTextIsValid){
+			printf("the input only contained valid characters\n");
+		} else {
+			printf("the input contained one or more invalid characters\n");
+		}
 	}
 	close(socketFD); // Close the socket
 	return 0;
+}
+
+int stringCheck(const char* input){
+	char temp[256] = "";
+	strcpy(temp, input);
+	int i;
+	for(i=0; i<strlen(temp) - 1; ++i){
+		if( temp[i] != ' ' && (temp[i] < 'A' || temp[i] > 'Z') ){
+			return 0;
+		}
+	}
+	return 1;
 }
