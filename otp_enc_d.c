@@ -102,6 +102,7 @@ int main(int argc, char *argv[])
 						output[i] = outputNum + 'A';
 					}
 				}
+				output[i+1] = '\n';
 				charsRead = send(establishedConnectionFD, output, sizeof(output), 0);
 				if(charsRead < 0){
 					error("ERROR writing to socket");
