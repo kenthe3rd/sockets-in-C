@@ -55,10 +55,11 @@ int main(int argc, char *argv[])
 			charsRead = recv(establishedConnectionFD, buffer, 255, 0); // Read the client's message from the socket
 			if (charsRead < 0) error("ERROR reading from socket");
 			if(strcmp(buffer, encryptorSignature) != 0){
-				fprintf(stderr, "Invalid signature! Closing connection.\n");
+                charsRead = send(establishedConnectionFD, "0", 1, 0);
+				error("Invalid signature (can only connect with otp_dec! Closing connection.\n");
 			} else {
 				// Send a Success message back to the client, then read some more
-				charsRead = send(establishedConnectionFD, "1", 39, 0); // Send success back
+				charsRead = send(establishedConnectionFD, "1", 1, 0); // Send success back
 				if(charsRead < 0){
 					error("ERROR writing to socket");
 				} else {
